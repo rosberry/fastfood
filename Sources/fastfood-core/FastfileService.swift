@@ -107,8 +107,15 @@ public final class FastfileService {
             let projectFastlaneFolder = try fileSystem.currentFolder.createSubfolderIfNeeded(withName: "fastlane")
             let sharedFastlaneFolder = try Folder(path: path)
             try sharedFastlaneFolder.subfolders.forEach { subfolder in
-                try? projectFastlaneFolder.subfolder(named: subfolder.name).delete()
-                try subfolder.copy(to: projectFastlaneFolder)
+                let isProtected = ["hooks"].contains(subfolder.name)
+                let localFolder = try? projectFastlaneFolder.subfolder(named: subfolder.name)
+                if !isProtected {
+                    try localFolder?.delete()
+                    try subfolder.copy(to: projectFastlaneFolder)
+                }
+                else if localFolder == nil {
+                    try subfolder.copy(to: projectFastlaneFolder)
+                }
             }
             try sharedFastlaneFolder.makeFileSequence(recursive: false, includeHidden: true).forEach { file in
                 let isProtected = [".env", "Appfile"].contains(file.name)
